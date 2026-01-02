@@ -1,3 +1,5 @@
 *lock.hcl
 *.terraform
+*.tfstate.d
 *.git
+./infrastructure/*-key*
