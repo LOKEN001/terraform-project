@@ -16,14 +16,30 @@ data "aws_ami" "ubuntu" {
 
 
 resource "aws_instance" "terra_instance" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
-  
+  count                  = var.instance_count
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.instance_type
+  key_name               = aws_key_pair.key_pair.key_name
+  vpc_security_group_ids = [aws_security_group.terra_security.id]
+  root_block_device {
+    volume_size = var.env == "prod" ? 20 : 10
+    volume_type = "gp3"
+  }
   tags = {
     Name = "${var.env}-instance"
   }
-  
-  resource "aws_default_vpc" "default" {}
+
+}
+
+resource "aws_default_vpc" "default" {}
+
+resource "aws_key_pair" "key_pair" {
+  key_name   = "${var.env}-server-key"
+  public_key = file("/home/ubuntu/terraform-project/infrastructure/terra-ec2-key.pub")
+
+  tags = {
+    Environment = var.env
+  }
 }
 
 resource "aws_security_group" "terra_security" {
@@ -32,7 +48,7 @@ resource "aws_security_group" "terra_security" {
   vpc_id      = aws_default_vpc.default.id
 
   tags = {
-    Name = "allow_tls"
+    Name = "${var.env}-security"
   }
 }
 
@@ -75,3 +91,5 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "-1" # semantically equivalent to all por
 }
+
+

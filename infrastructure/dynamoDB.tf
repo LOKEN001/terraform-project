@@ -4,6 +4,7 @@ resource "aws_dynamodb_table" "tf_lock" {
   hash_key     = var.hash-key
 
   attribute {
-    name = "${var.env}-lockKey"
+    name = var.hash-key
     type = "S"
   }
+}
